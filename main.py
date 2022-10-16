@@ -23,7 +23,7 @@ app.add_middleware(
 )
 
 
-# Rota Raiz
+# Rota Root
 @app.get("/")
 def root():
     return {"status": "ok"}

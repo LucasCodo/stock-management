@@ -20,7 +20,7 @@ class BaseModel(Model):
 class Products(BaseModel):
     name = TextField()
     code_ncm = IntegerField()
-    description = TextField()
+    description = TextField(null=True)
     number_units = FloatField()
     type_units = TextField()
     value_units = FloatField()
@@ -28,6 +28,7 @@ class Products(BaseModel):
 
 
 class Orders(BaseModel):
+    description = TextField(null=True)
     pass
 
 
