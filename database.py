@@ -6,7 +6,7 @@ user = os.getenv("db_user")
 password = os.getenv("db_password")
 host = os.getenv("db_host")
 port = int(os.getenv("db_port"))
-pg_db = PostgresqlDatabase("", user=user, password=password,
+pg_db = PostgresqlDatabase("stock", user=user, password=password,
                            host=host, port=port)
 
 
