@@ -1,22 +1,8 @@
 from peewee import *
 from time import time
 from math import fsum
-import json
 
 database = SqliteDatabase("database.db")
-
-"""
-    [{
-        "code": 12341234
-        "name": "Telha Canal Barro forte",
-        "description": "Telha Canal Barro forte",
-        "expecification": "Telha Canal\nMedida: 0,60 x 0,40\nCor: Vermelha\nPeso: 2,5 kg\nMarca: Barro forte",
-        "image": "https://picsum.photos/200/300",
-        "unit": "mil",
-        "quantity": 100,
-        "price": 100
-    }]
-"""
 
 
 class BaseModel(Model):
@@ -153,7 +139,7 @@ def list_sales_orders():
     return result
 
 
-def delete_list_products(order_id: str):
+def delete_list_products(order_id: int):
     query = ListProducts.delete().where(ListProducts.order_id == order_id)
     sale_order = get_sale_order(order_id)
     for product in sale_order["products"]:
@@ -163,7 +149,7 @@ def delete_list_products(order_id: str):
     query.execute()
 
 
-def delete_sales_order(order_id: str):
+def delete_sales_order(order_id: int):
     try:
         delete_list_products(order_id)
         order = SalesOrders.get(order_id)
@@ -172,7 +158,7 @@ def delete_sales_order(order_id: str):
         return None
 
 
-def update_sales_order(order_id: str, table_products: dict, description: str):
+def update_sales_order(order_id: int, table_products: dict, description: str):
     try:
         delete_list_products(order_id)
         query = [Products.get(Products.barcode == barcode) for barcode in table_products]
@@ -217,14 +203,11 @@ def get_sales_orders_by_time_interval(start: int = None, end: int = None):
     return list_orders
 
 
-
-
-
 if __name__ == "__main__":
     insert_product(name="asdf", barcode="asdf", description="asdf", image="asdf",
-                    unit="asdf", quantity=10, price=1.25)
+                   unit="asdf", quantity=10, price=1.25)
     insert_product(name="asdf", barcode="asdfa", description="asdf", image="asdf",
-                    unit="asdf", quantity=10, price=3.1)
+                   unit="asdf", quantity=10, price=3.1)
     #print(list_products())
     create_sales_order({"asdfa": 2, "asdf": 2})
     #print(create_sales_order({"asdf": 987}))
