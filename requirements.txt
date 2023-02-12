@@ -1,6 +1,5 @@
-fastapi>=0.85.1
-pydantic>=1.8.2
-uvicorn>=0.13.4
-peewee>=3.15.4
-websockets>=10.4
-
+fastapi==0.91.0
+peewee==3.15.4
+pydantic==1.10.4
+uvicorn==0.20.0
+websockets==10.4
