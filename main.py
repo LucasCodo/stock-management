@@ -1,9 +1,7 @@
-import json
-
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List, Dict
+from typing import Dict
 import database
 
 app = FastAPI()
@@ -32,7 +30,6 @@ class Product(BaseModel):
     pass
 
 
-
 # Rota Root
 @app.get("/")
 def root():
@@ -43,12 +40,13 @@ def root():
 def products(limit: int = 0):
     return database.list_products(limit)
 
+
 @app.post("/product")
 def add_product(product: Product):
     try:
         return database.insert_product(**dict(product))
     except Exception as e:
-        return str(e)
+        raise HTTPException(status_code=422, detail=str(e))
 
 
 @app.put("/product")
@@ -56,16 +54,16 @@ def update_product(product: Product):
     try:
         return database.update_product_by_barcode(**dict(product))
     except Exception as e:
-        return str(e)
+        raise HTTPException(status_code=422, detail=str(e))
 
 
 @app.delete("/product")
 def delete_product(barcode: str):
     try:
         database.delete_product_by_barcode(barcode)
-        return True
+        return HTTPException(status_code=200)
     except Exception as e:
-        return str(e)
+        raise HTTPException(status_code=422, detail=str(e))
 
 
 @app.get("/sale-order/all")
@@ -78,9 +76,9 @@ def add_sales_order(table: Dict[str, float], description: str = None):
     try:
         return database.create_sales_order(table, description)
     except ValueError as e:
-        return str(e)
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
-        return str(e)
+        raise HTTPException(status_code=422, detail=str(e))
 
 
 @app.put("/sale-order")
@@ -88,16 +86,13 @@ def update_sales_order(order_id: int, table: Dict[str, float], description: str 
     try:
         return database.update_sales_order(order_id, table, description)
     except Exception as e:
-        return str(e)
+        raise HTTPException(status_code=422, detail=str(e))
+
 
 @app.delete("/sale-order")
 def delete_sales_order(order_id: int):
     try:
         database.delete_sales_order(order_id)
-        return True
+        return HTTPException(status_code=200)
     except Exception as e:
-        return str(e)
-
-
-
-
+        raise HTTPException(status_code=422, detail=str(e))
