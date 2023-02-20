@@ -1,12 +1,19 @@
 from peewee import *
 from time import time
 from math import fsum
+import os
 
-database = SqliteDatabase("database.db")
+db_name = os.getenv("db_name")
+user = os.getenv("db_user")
+password = os.getenv("db_password")
+host = os.getenv("db_host")
+port = int(os.getenv("db_port"))
+database = PostgresqlDatabase(database=db_name, user=user, password=password,
+                              host=host, port=port)
 
 
 class BaseModel(Model):
-    time_stamp = TimeField(default=int(time()), null=True)
+    time_stamp = IntegerField(default=int(time()), null=True)
 
     class Meta:
         database = database
