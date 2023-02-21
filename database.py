@@ -3,18 +3,17 @@ from peewee import *
 from time import time
 from math import fsum
 import os
-import MySQLdb
+from playhouse.db_url import connect
 
-database = MySQLdb.connect(
-    host= os.getenv("db_host"),
-    user=os.getenv("db_user"),
-    passwd= os.getenv("db_password"),
-    db= os.getenv("db_name"),
-    ssl_mode = "VERIFY_IDENTITY",
-    ssl      = {
-        "ca": "/etc/ssl/cert.pem"
-    }
-)
+host = os.getenv("db_host")
+user = os.getenv("db_user")
+passwd = os.getenv("db_password")
+db = os.getenv("db_name")
+port = os.getenv("db_port")
+
+url = "mysql://"+user+":"+passwd+"@"+host+":"+port+"/"+db
+database = connect(str(url))
+
 
 
 class BaseModel(Model):
