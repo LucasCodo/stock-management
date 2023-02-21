@@ -1,15 +1,20 @@
+import peewee
 from peewee import *
 from time import time
 from math import fsum
 import os
+import MySQLdb
 
-db_name = os.getenv("db_name")
-user = os.getenv("db_user")
-password = os.getenv("db_password")
-host = os.getenv("db_host")
-port = int(os.getenv("db_port"))
-database = PostgresqlDatabase(database=db_name, user=user, password=password,
-                              host=host, port=port)
+database = MySQLdb.connect(
+    host= os.getenv("db_host"),
+    user=os.getenv("db_user"),
+    passwd= os.getenv("db_password"),
+    db= os.getenv("db_name"),
+    ssl_mode = "VERIFY_IDENTITY",
+    ssl      = {
+        "ca": "/etc/ssl/cert.pem"
+    }
+)
 
 
 class BaseModel(Model):
