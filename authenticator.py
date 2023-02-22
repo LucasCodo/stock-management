@@ -8,7 +8,7 @@ from fastapi.security import (
 )
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ValidationError, EmailStr
 import os
 
 from database import get_user_by_login, create_user, TypeUser
@@ -34,12 +34,12 @@ class TokenData(BaseModel):
 class User(BaseModel):
     username: str
     fullname: str
-    email: Union[str, None] = None
+    email: EmailStr
+    type: int
 
 
 class UserInDB(User):
     hashed_password: str
-    type: int
     secret_number: str
 
 
@@ -65,10 +65,8 @@ def get_password_hash(username: str, email: str, password: str, secret_number: s
 
 
 def get_user(login: str):
-    db = get_user_by_login(login)
-    if login in db:
-        user_dict = db[login]
-        return UserInDB(**user_dict)
+    user_dict = get_user_by_login(login)
+    return UserInDB(**user_dict)
 
 
 def authenticate_user(login: str, password: str):
@@ -124,8 +122,19 @@ async def get_current_user(
             )
     return user
 
+root_user = os.getenv("root_user", "root")
+if not get_user_by_login(root_user):
+    secret_number = token_hex(32)
+    username = root_user
+    fullname = root_user
+    email = os.getenv("root_email", root_user+"@"+root_user+"."+root_user)
+    password = root_user
+    password_hash = get_password_hash(username, email, password, secret_number)
+    create_user(username, fullname, email, TypeUser.root.value, password_hash, secret_number)
+
 if __name__ == "__main__":
-    secret__number = token_hex(32)
-    password_hash = get_password_hash("root", "root", "root", secret__number)
-    create_user("root", "root", "root", TypeUser.root.value, password_hash, secret__number)
-    print(get_user_by_login("root"))
+    #secret_number = token_hex(32)
+    #password_hash = get_password_hash("root", "root@root.root", "root", secret_number)
+    #create_user("root", "root", "root@root.root", TypeUser.root.value, password_hash, secret__number)
+    #print(get_user_by_login("root"))
+    pass

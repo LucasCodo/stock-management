@@ -21,7 +21,7 @@ class BaseModel(Model):
 
 
 class Users(BaseModel):
-    username = TextField()
+    username = TextField(unique=True)
     fullname = TextField()
     type = IntegerField(default=TypeUser.viewer.value)
     email = TextField(unique=True)
@@ -221,15 +221,10 @@ def get_sales_orders_by_time_interval(start: int = None, end: int = None):
 
 
 def create_user(username: str, fullname: str, email: str, type_: int, hashed_password: str, secret_number: str):
-    try:
-        user_ = Users(username=username, fullname=fullname, email=email, type=type_,
-                      hashed_password=hashed_password,
-                      secret_number=secret_number)
-        user_.save()
-    except Exception as e:
-        print(e)
-        return False
-    return True
+    user_ = Users(username=username, fullname=fullname, email=email, type=type_,
+                  hashed_password=hashed_password,
+                  secret_number=secret_number)
+    user_.save()
 
 
 def get_users():
@@ -239,9 +234,15 @@ def get_users():
 
 
 def get_user_by_login(login: str):
-    user_ = Users.get(Users.email == login or Users.username == login)
-    result = user_.__dict__["__data__"]
-    return {user_.username: result}
+    try:
+        if "@" in login:
+            user_ = Users.get(Users.email == login)
+        else:
+            user_ = Users.get(Users.username == login)
+        result = user_.__dict__["__data__"]
+        return result
+    except DoesNotExist:
+        return dict()
 
 
 def update_type_user(login: str, **kwargs):
@@ -290,5 +291,5 @@ if __name__ == "__main__":
     #print(get_sale_order(6))
     #print(list_products())
     #update_product_by_barcode("asdf", **{"quantity": 50})
-    print(get_users())
+    print(get_user_by_login("roota"))
     pass
