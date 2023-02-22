@@ -2,6 +2,7 @@ from peewee import *
 from time import time
 from math import fsum
 import os
+from enumerations import TypeUser
 
 db_name = os.getenv("db_name")
 user = os.getenv("db_user")
@@ -17,6 +18,15 @@ class BaseModel(Model):
 
     class Meta:
         database = database
+
+
+class Users(BaseModel):
+    username = TextField()
+    fullname = TextField()
+    type = IntegerField(default=TypeUser.viewer.value)
+    email = TextField(unique=True)
+    hashed_password = TextField(unique=True)
+    secret_number = TextField(unique=True)
 
 
 class Products(BaseModel):
@@ -41,7 +51,7 @@ class ListProducts(BaseModel):
     price = FloatField()
 
 
-database.create_tables([Products, SalesOrders, ListProducts])
+database.create_tables([Products, SalesOrders, ListProducts, Users])
 
 
 def query_to_dict(query):
@@ -210,13 +220,60 @@ def get_sales_orders_by_time_interval(start: int = None, end: int = None):
     return list_orders
 
 
+def create_user(username: str, fullname: str, email: str, type_: int, hashed_password: str, secret_number: str):
+    try:
+        user_ = Users(username=username, fullname=fullname, email=email, type=type_,
+                      hashed_password=hashed_password,
+                      secret_number=secret_number)
+        user_.save()
+    except Exception as e:
+        print(e)
+        return False
+    return True
+
+
+def get_users():
+    query = Users.select(Users.username, Users.fullname, Users.email, Users.type)
+    result = query_to_dict(query)
+    return result
+
+
+def get_user_by_login(login: str):
+    user_ = Users.get(Users.email == login or Users.username == login)
+    result = user_.__dict__["__data__"]
+    return {user_.username: result}
+
+
+def update_type_user(login: str, **kwargs):
+    try:
+        user_ = Users.get(Users.email == login or Users.username == login)
+        user_.type = kwargs.get("type", user_.type)
+        user_.fullname = kwargs.get("fullname", user_.fullname)
+        user_.hashed_password = kwargs.get("hashed_password", user_.hashed_password)
+        user_.save()
+        return True
+    except DoesNotExist:
+        return False
+
+
+def delete_user(login: str):
+    try:
+        user_ = Users.get(Users.email == login or Users.username == login)
+        user_.delete_instance()
+        return True
+    except DoesNotExist:
+        return False
+
+
+
+
 if __name__ == "__main__":
-    insert_product(name="asdf", barcode="asdf", description="asdf", image="asdf",
-                   unit="asdf", quantity=10, price=1.25)
-    insert_product(name="asdf", barcode="asdfa", description="asdf", image="asdf",
-                   unit="asdf", quantity=10, price=3.1)
+    #insert_product(name="asdf", barcode="asdf", description="asdf", image="asdf",
+    #               unit="asdf", quantity=10, price=1.25)
+    #insert_product(name="asdf", barcode="asdfa", description="asdf", image="asdf",
+    #               unit="asdf", quantity=10, price=3.1)
     #print(list_products())
-    create_sales_order({"asdfa": 2, "asdf": 2})
+    #create_sales_order({"asdfa": 2, "asdf": 2})
     #print(create_sales_order({"asdf": 987}))
     #print(get_sale_order(1))
     #dic = {"description": "Marca: barro forte","price": 5.5}
@@ -233,5 +290,5 @@ if __name__ == "__main__":
     #print(get_sale_order(6))
     #print(list_products())
     #update_product_by_barcode("asdf", **{"quantity": 50})
-
+    print(get_users())
     pass
