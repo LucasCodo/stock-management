@@ -35,7 +35,7 @@ class User(BaseModel):
     username: str
     fullname: str
     email: EmailStr
-    type: int
+    type: int = 3
 
 
 class UserInDB(User):
