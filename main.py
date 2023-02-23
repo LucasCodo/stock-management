@@ -47,7 +47,7 @@ async def products(limit: int = 0, current_user: User = Depends(get_current_user
 
 @app.post("/product")
 async def add_product(product: Product, current_user: User = Depends(get_current_user)):
-    if current_user.type >= TypeUser.viewer.value:
+    if current_user.type >= TypeUser.admin.value:
         raise HTTPException(status_code=400, detail="Permission denied.")
     try:
         return database.insert_product(**dict(product))
@@ -134,10 +134,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 @app.get("/users/")
 async def read_users(current_user: User = Depends(get_current_user)):
     if current_user.type in (TypeUser.root.value, TypeUser.admin.value):
-        try:
-            return {"Users": database.get_users()}
-        except peewee.InternalError as e:
-            return HTTPException(status_code=500, detail=str(e))
+        return {"Users": database.get_users()}
     raise HTTPException(status_code=400, detail="Permission denied.")
 
 
@@ -154,9 +151,21 @@ async def add_user(user: User, password: str, current_user: User = Depends(get_c
         try:
             secret_number = token_hex(32)
             hashed_password = get_password_hash(user.username, user.email, password, secret_number)
-            create_user(user.username, user.fullname, user.email, user.type, hashed_password,
-                        secret_number)
+            database.create_user(user.username, user.fullname, user.email, user.type,
+                                 hashed_password, secret_number)
             return HTTPException(status_code=200, detail="OK")
-        except Exception as e:
+        except peewee.IntegrityError as e:
             raise HTTPException(status_code=422, detail=str(e))
+    raise HTTPException(status_code=400, detail="Permission denied.")
+
+
+@app.put("/users/me/password")
+async def update_password_user(password: str, current_user: UserInDB = Depends(get_current_user)):
+    try:
+        hashed_password = get_password_hash(current_user.username, current_user.email,
+                                            password, current_user.secret_number)
+        if database.update_user(current_user.username, hashed_password=hashed_password):
+            return HTTPException(status_code=200, detail="OK")
+    except peewee.IntegrityError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     raise HTTPException(status_code=400, detail="Permission denied.")

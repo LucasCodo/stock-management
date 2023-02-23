@@ -47,11 +47,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="token",
-    scopes={"me": "Read information about the current user.",
-            "read": "Just read information.",
-            "update": "Just update information.",
-            "insert": "Just insert information.",
-            "delete": "Just delete information."},
+    scopes={"me": "Read information about the current user."},
 )
 
 
