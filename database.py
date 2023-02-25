@@ -111,7 +111,8 @@ def get_sale_order(order_id):
     for item in list_prod:
         query = Products.get_by_id(item["product_id"])
         prod = query.__dict__["__data__"]
-        d = item | prod
+        d = item.copy()
+        d.update(prod)
         for a in ["product_id", "order_id", "quantity", "id", "time_stamp"]:
             d.pop(a)
         d["price"] = item["price"]
@@ -212,7 +213,8 @@ def get_sales_orders_by_time_interval(start: int = None, end: int = None):
         for item in list_prod:
             query = Products.get_by_id(item["product_id"])
             prod = query.__dict__["__data__"]
-            d = item | prod
+            d = item.copy()
+            d.update(prod)
             for a in ["product_id", "order_id", "quantity", "id", "time_stamp"]:
                 d.pop(a)
             result += [d]
