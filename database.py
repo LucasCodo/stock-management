@@ -282,6 +282,14 @@ def delete_user(login: str):
         return False
 
 
+def backup():
+    result = dict()
+    result["users"] = query_to_dict(Users.select())
+    result["products"] = list_products()
+    result["sales_orders"] = list_sales_orders()
+    return result
+
+
 
 
 if __name__ == "__main__":
@@ -307,5 +315,6 @@ if __name__ == "__main__":
     #print(get_sale_order(6))
     #print(list_products())
     #update_product_by_barcode("asdf", **{"quantity": 50})
-    print(get_user_by_login("roota"))
+    #
+    print(backup())
     pass

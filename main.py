@@ -169,3 +169,10 @@ async def update_password_user(password: str, current_user: UserInDB = Depends(g
     except peewee.IntegrityError as e:
         raise HTTPException(status_code=422, detail=str(e))
     raise HTTPException(status_code=400, detail="Permission denied.")
+
+
+@app.get("/backup")
+async def backup(current_user: User = Depends(get_current_user)):
+    if current_user.type == 0:
+        return database.backup()
+    raise HTTPException(status_code=400, detail="Permission denied.")
