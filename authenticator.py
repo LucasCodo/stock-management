@@ -21,16 +21,6 @@ ALGORITHM = os.getenv("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-
-class TokenData(BaseModel):
-    username: Union[str, None] = None
-    scopes: List[str] = []
-
-
 class User(BaseModel):
     username: str
     fullname: str
@@ -41,6 +31,17 @@ class User(BaseModel):
 class UserInDB(User):
     hashed_password: str
     secret_number: str
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    user: User
+
+
+class TokenData(BaseModel):
+    username: Union[str, None] = None
+    scopes: List[str] = []
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
