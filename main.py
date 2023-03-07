@@ -5,6 +5,7 @@ from typing import Dict
 from authenticator import *
 from fastapi.security import OAuth2PasswordRequestForm
 import database
+from coupon_manager import Coupon, CouponManager
 
 app = FastAPI()
 
@@ -176,3 +177,24 @@ async def backup(current_user: User = Depends(get_current_user)):
     if current_user.type == 0:
         return database.backup()
     raise HTTPException(status_code=400, detail="Permission denied.")
+
+coupon_manager = CouponManager()
+
+
+@app.post("/discount")
+async def discount(table: Dict[str, float], current_user: User = Depends(get_current_user)):
+    if current_user.type in (TypeUser.root.value, TypeUser.admin.value):
+        products = database.list_products()
+        barcodes = [a["barcode"] for a in products]
+        for item in table:
+            if item not in barcodes:
+                raise HTTPException(status_code=422, detail="Unknown product")
+            if table[item] < 0 or table[item] > 1:
+                raise HTTPException(status_code=422, detail="Invalid Value")
+        return {"coupon": coupon_manager.add(table)}
+    raise HTTPException(status_code=400, detail="Permission denied.")
+
+
+@app.get("/discount")
+async def discount(coupon: str):
+    return coupon_manager.get_items(coupon)
