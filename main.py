@@ -1,10 +1,12 @@
 import peewee
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict
 from authenticator import *
 from fastapi.security import OAuth2PasswordRequestForm
 import database
+from fastapi.responses import FileResponse
+from tempfile import NamedTemporaryFile
 
 app = FastAPI()
 
@@ -169,3 +171,34 @@ async def update_password_user(password: str, current_user: UserInDB = Depends(g
     except peewee.IntegrityError as e:
         raise HTTPException(status_code=422, detail=str(e))
     raise HTTPException(status_code=400, detail="Permission denied.")
+
+
+@app.get("/backup")
+async def backup(current_user: UserInDB = Depends(get_current_user)):
+    if current_user.type == TypeUser.root.value:
+        with NamedTemporaryFile(delete=False) as file:
+            file_path = file.name
+            database.backup(file_path)
+            date = datetime.now().date()
+            return FileResponse(file_path, filename=f"backup-{date}.sql")
+    else:
+        raise HTTPException(status_code=401)
+
+
+@app.post("/backup/restore")
+async def restore_backup(file: UploadFile = File(..., media_type="application/x-sql"),
+                         current_user: UserInDB = Depends(get_current_user)):
+    if current_user.type == TypeUser.root.value:
+        print(file.content_type)
+        if file.content_type != "application/x-sql":
+            raise HTTPException(status_code=422)
+        contents = await file.read()
+        file_name = None
+        with NamedTemporaryFile(suffix=".sql", delete=False) as f:
+            f.write(contents)
+            file_name = f.name
+        if file_name:
+            database.restore_backup(file_name)
+        raise HTTPException(status_code=200)
+    else:
+        raise HTTPException(status_code=401)

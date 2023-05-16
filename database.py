@@ -3,7 +3,7 @@ from time import time
 from math import fsum
 import os
 from enumerations import TypeUser
-from string import digits, ascii_lowercase
+import subprocess
 
 db_name = os.getenv("db_name")
 user = os.getenv("db_user")
@@ -236,7 +236,7 @@ def get_users():
         query = Users.select(Users.username, Users.fullname, Users.email, Users.type)
         result = query_to_dict(query)
         return result
-    except InternalError as e:
+    except InternalError:
         database.rollback()
         query = Users.select(Users.username, Users.fullname, Users.email, Users.type)
         result = query_to_dict(query)
@@ -282,6 +282,18 @@ def delete_user(login: str):
         return False
 
 
+def backup(backup_path):
+    comando = ['pg_dump', '-U', user, '-h', host, '-p', str(port),
+               '-F', 'c', '-b', '-v', '-a', '-f', backup_path, db_name]
+    process = subprocess.Popen(comando, stdin=subprocess.PIPE)
+    process.communicate(input=password.encode())
+
+
+def restore_backup(backup_path):
+    comando = ['pg_restore', '-U', user, '-h', host, '-p',
+               str(port), '-d', db_name, backup_path]
+    print(" ".join(comando))
+    subprocess.run(comando)
 
 
 if __name__ == "__main__":
@@ -307,5 +319,5 @@ if __name__ == "__main__":
     #print(get_sale_order(6))
     #print(list_products())
     #update_product_by_barcode("asdf", **{"quantity": 50})
-    print(get_user_by_login("roota"))
+    #print(get_user_by_login("roota"))
     pass
