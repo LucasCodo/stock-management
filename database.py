@@ -290,10 +290,19 @@ def backup(backup_path):
 
 
 def restore_backup(backup_path):
+    root_user = os.getenv("root_user", "root")
+    root_bkp = get_user_by_login(root_user)
+    print(root_bkp)
+    Users.delete().execute()
     comando = ['pg_restore', '-U', user, '-h', host, '-p',
                str(port), '-d', db_name, backup_path]
     print(" ".join(comando))
     subprocess.run(comando)
+    root = get_user_by_login(root_user)
+    if len(root) == 0:
+        create_user(root_bkp["username"], root_bkp["fullname"],
+                    root_bkp["email"], root_bkp["type"],
+                    root_bkp["hashed_password"], root_bkp["secret_number"])
 
 
 if __name__ == "__main__":
