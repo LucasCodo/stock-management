@@ -2,6 +2,8 @@ from peewee import *
 from time import time
 from math import fsum
 import os
+from enumerations import TypeUser
+import subprocess
 
 db_name = os.getenv("db_name")
 user = os.getenv("db_user")
@@ -17,6 +19,15 @@ class BaseModel(Model):
 
     class Meta:
         database = database
+
+
+class Users(BaseModel):
+    username = TextField(unique=True)
+    fullname = TextField()
+    type = IntegerField(default=TypeUser.viewer.value)
+    email = TextField(unique=True)
+    hashed_password = TextField(unique=True)
+    secret_number = TextField(unique=True)
 
 
 class Products(BaseModel):
@@ -41,7 +52,7 @@ class ListProducts(BaseModel):
     price = FloatField()
 
 
-database.create_tables([Products, SalesOrders, ListProducts])
+database.create_tables([Products, SalesOrders, ListProducts, Users])
 
 
 def query_to_dict(query):
@@ -100,7 +111,8 @@ def get_sale_order(order_id):
     for item in list_prod:
         query = Products.get_by_id(item["product_id"])
         prod = query.__dict__["__data__"]
-        d = item | prod
+        d = item.copy()
+        d.update(prod)
         for a in ["product_id", "order_id", "quantity", "id", "time_stamp"]:
             d.pop(a)
         d["price"] = item["price"]
@@ -201,7 +213,8 @@ def get_sales_orders_by_time_interval(start: int = None, end: int = None):
         for item in list_prod:
             query = Products.get_by_id(item["product_id"])
             prod = query.__dict__["__data__"]
-            d = item | prod
+            d = item.copy()
+            d.update(prod)
             for a in ["product_id", "order_id", "quantity", "id", "time_stamp"]:
                 d.pop(a)
             result += [d]
@@ -210,13 +223,95 @@ def get_sales_orders_by_time_interval(start: int = None, end: int = None):
     return list_orders
 
 
+def create_user(username: str, fullname: str, email: str, type_: int, hashed_password: str,
+                secret_number: str):
+    user_ = Users(username=username, fullname=fullname, email=email, type=type_,
+                  hashed_password=hashed_password,
+                  secret_number=secret_number)
+    user_.save()
+
+
+def get_users():
+    try:
+        query = Users.select(Users.username, Users.fullname, Users.email, Users.type)
+        result = query_to_dict(query)
+        return result
+    except InternalError:
+        database.rollback()
+        query = Users.select(Users.username, Users.fullname, Users.email, Users.type)
+        result = query_to_dict(query)
+        return result
+
+
+def get_user_by_login(login: str):
+    try:
+        if "@" in login:
+            user_ = Users.get(Users.email == login)
+        else:
+            user_ = Users.get(Users.username == login)
+        result = user_.__dict__["__data__"]
+        return result
+    except DoesNotExist:
+        return dict()
+
+
+def update_user(login: str, **kwargs):
+    try:
+        if "@" in login:
+            user_ = Users.get(Users.email == login)
+        else:
+            user_ = Users.get(Users.username == login)
+        user_.type = kwargs.get("type", user_.type)
+        user_.fullname = kwargs.get("fullname", user_.fullname)
+        user_.hashed_password = kwargs.get("hashed_password", user_.hashed_password)
+        user_.save()
+        return True
+    except DoesNotExist:
+        return False
+
+
+def delete_user(login: str):
+    try:
+        if "@" in login:
+            user_ = Users.get(Users.email == login)
+        else:
+            user_ = Users.get(Users.username == login)
+        user_.delete_instance()
+        return True
+    except DoesNotExist:
+        return False
+
+
+def backup(backup_path):
+    comando = ['pg_dump', '-U', user, '-h', host, '-p', str(port),
+               '-F', 'c', '-b', '-v', '-a', '-f', backup_path, db_name]
+    process = subprocess.Popen(comando, stdin=subprocess.PIPE)
+    process.communicate(input=password.encode())
+
+
+def restore_backup(backup_path):
+    root_user = os.getenv("root_user", "root")
+    root_bkp = get_user_by_login(root_user)
+    print(root_bkp)
+    Users.delete().execute()
+    comando = ['pg_restore', '-U', user, '-h', host, '-p',
+               str(port), '-d', db_name, backup_path]
+    print(" ".join(comando))
+    subprocess.run(comando)
+    root = get_user_by_login(root_user)
+    if len(root) == 0:
+        create_user(root_bkp["username"], root_bkp["fullname"],
+                    root_bkp["email"], root_bkp["type"],
+                    root_bkp["hashed_password"], root_bkp["secret_number"])
+
+
 if __name__ == "__main__":
-    insert_product(name="asdf", barcode="asdf", description="asdf", image="asdf",
-                   unit="asdf", quantity=10, price=1.25)
-    insert_product(name="asdf", barcode="asdfa", description="asdf", image="asdf",
-                   unit="asdf", quantity=10, price=3.1)
+    #insert_product(name="asdf", barcode="asdf", description="asdf", image="asdf",
+    #               unit="asdf", quantity=10, price=1.25)
+    #insert_product(name="asdf", barcode="asdfa", description="asdf", image="asdf",
+    #               unit="asdf", quantity=10, price=3.1)
     #print(list_products())
-    create_sales_order({"asdfa": 2, "asdf": 2})
+    #create_sales_order({"asdfa": 2, "asdf": 2})
     #print(create_sales_order({"asdf": 987}))
     #print(get_sale_order(1))
     #dic = {"description": "Marca: barro forte","price": 5.5}
@@ -233,5 +328,5 @@ if __name__ == "__main__":
     #print(get_sale_order(6))
     #print(list_products())
     #update_product_by_barcode("asdf", **{"quantity": 50})
-
+    #print(get_user_by_login("roota"))
     pass
