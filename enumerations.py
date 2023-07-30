@@ -2,10 +2,10 @@ from enum import Enum
 
 
 class TypeUser(Enum):
-    root = 0
-    admin = 1
-    user = 2
-    viewer = 3
+    root: int = 0
+    admin: int = 1
+    user: int = 2
+    viewer: int = 3
 
 
 class TypeUnits(Enum):
