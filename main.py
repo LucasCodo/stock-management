@@ -49,7 +49,7 @@ async def products(limit: int = 0, current_user: User = Depends(get_current_user
 
 @app.post("/product")
 async def add_product(product: Product, current_user: User = Depends(get_current_user)):
-    if current_user.type >= TypeUser.admin.value:
+    if current_user.type > TypeUser.admin.value:
         raise HTTPException(status_code=400, detail="Permission denied.")
     try:
         return database.insert_product(**dict(product))
