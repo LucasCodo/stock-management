@@ -1,10 +1,10 @@
 import peewee
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Security
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict
-from authenticator import *
+from app.authenticator import *
 from fastapi.security import OAuth2PasswordRequestForm
-import database
+import app.database as database
 from fastapi.responses import FileResponse
 from tempfile import NamedTemporaryFile
 
@@ -49,7 +49,7 @@ async def products(limit: int = 0, current_user: User = Depends(get_current_user
 
 @app.post("/product")
 async def add_product(product: Product, current_user: User = Depends(get_current_user)):
-    if current_user.type >= TypeUser.admin.value:
+    if current_user.type > TypeUser.admin.value:
         raise HTTPException(status_code=400, detail="Permission denied.")
     try:
         return database.insert_product(**dict(product))

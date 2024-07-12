@@ -1,0 +1,34 @@
+version: "0.3.8"
+
+services:
+  database:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_DB: db
+      POSTGRES_PASSWORD: password
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  web:
+    build: ./app
+    restart: always
+    ports:
+      - "8000:80"
+    depends_on:
+      - database
+    environment:
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      ALGORITHM: HS256
+      db_host: database
+      db_name: db
+      db_password: password
+      db_port: 5432
+      db_user: postgres
+      PGPASSWORD: password
+      SECRET_KEY: 0768e0826fe59b040e39b3f777affb3d9cb4e671d95d6b170184e8b599701841
+
+volumes:
+  db_data:

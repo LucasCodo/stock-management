@@ -2,7 +2,7 @@ from peewee import *
 from time import time
 from math import fsum
 import os
-from enumerations import TypeUser
+from app.enumerations import TypeUser
 import subprocess
 
 db_name = os.getenv("db_name")
