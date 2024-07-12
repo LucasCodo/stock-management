@@ -1,17 +1,17 @@
 from datetime import datetime, timedelta
 from typing import List, Union
 
-from fastapi import Depends, HTTPException, Security, status
+from fastapi import Depends, HTTPException, status
 from fastapi.security import (
     OAuth2PasswordBearer,
     SecurityScopes,
 )
-from jose import JWTError, jwt
+import jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel, ValidationError, EmailStr
 import os
 
-from database import get_user_by_login, create_user, TypeUser
+from app.database import get_user_by_login, create_user, TypeUser
 from secrets import token_hex
 
 # to get a string like this run:
@@ -105,7 +105,7 @@ async def get_current_user(
             raise credentials_exception
         token_scopes = payload.get("scopes", [])
         token_data = TokenData(scopes=token_scopes, username=username)
-    except (JWTError, ValidationError):
+    except (ValidationError):
         raise credentials_exception
     user = get_user(login=token_data.username)
     if user is None:

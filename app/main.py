@@ -1,10 +1,10 @@
 import peewee
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Security
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict
-from authenticator import *
+from app.authenticator import *
 from fastapi.security import OAuth2PasswordRequestForm
-import database
+import app.database as database
 from fastapi.responses import FileResponse
 from tempfile import NamedTemporaryFile
 
